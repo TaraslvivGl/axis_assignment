@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configs>
+	<axis-url>http://<device_ip>/local/fastcgi_example/example.cgi?:/current-img=y800</axis-url>
+	<user-name><user></user-name>
+	<user-password><password></user-password>
+	<http-server-url>http://127.0.0.1:8080</http-server-url>
+	<out-bin-file>img_frame_y800.bin</out-bin-file>
+	<out-xml-file>img_frame_y800.xml</out-xml-file>
+</configs>
