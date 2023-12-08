@@ -1,0 +1,83 @@
+diff --git a/fastcgi_example.c b/fastcgi_example_edited.c
+index 7118f4b..09380ef 100644
+--- a/fastcgi_example.c
++++ b/fastcgi_example_edited.c
+@@ -19,6 +19,10 @@
+ #include <stdlib.h>
+ #include <sys/stat.h>
+ #include <syslog.h>
++#include <sys/mman.h>
++#include <stdio.h>
++#include <fcntl.h>
++#include <unistd.h>
+ 
+ #define FCGI_SOCKET_NAME "FCGI_SOCKET_NAME"
+ 
+@@ -31,7 +35,6 @@
+  */
+ 
+ int fcgi_run() {
+-    int count = 0;  // counter of requests
+     int sock;
+     FCGX_Request request;
+     char* socket_path = NULL;
+@@ -67,10 +70,6 @@ int fcgi_run() {
+ 
+     while (FCGX_Accept_r(&request) == 0) {
+         syslog(LOG_INFO, "FCGX_Accept_r OK");
+-        // Write the HTTP header
+-        FCGX_FPrintF(request.out, "Content-Type: text/html\n\n");
+-        // Write the HTML greeting
+-        FCGX_FPrintF(request.out, "<h1>Hello ");
+ 
+         // Parse the uri and the query string
+         const char* uriString = FCGX_GetParam("REQUEST_URI", request.envp);
+@@ -112,22 +111,34 @@ int fcgi_run() {
+             queryItem = queryItem->next;
+         }
+ 
+-        // print the rest of the body
+-        FCGX_FPrintF(request.out, " from FastCGI</h1> Request number %d", ++count);
+-        FCGX_FPrintF(request.out, "<br>URI: ");
+-        FCGX_FPrintF(request.out, (uriString ? uriString : "NULL"));
+-        FCGX_FPrintF(request.out, "<br>KEY, ITEM: ");
+-
+-        queryItem = queryList;
++        int res = system("/usr/local/packages/vdoencodeclient/vdoencodeclient --format y800 --frames 1 --output vdo.out");
++        if (res < 0)
++        {
++            FCGX_FPrintF(request.out, "Failed to execute vdoencodeclient");
++            continue;
++        }
++        FCGX_FPrintF(request.out, "Content-Type: application/octet-stream\n\n");
++        int fd = open("vdo.out", O_RDONLY);
++        if (fd < 0)
++        {
++            FCGX_FPrintF(request.out, "Failed to open vdo.out");
++            continue;
++        }
++        struct stat s;
++        int status = fstat(fd, &s);
++        if (status)
++        {
++            //TODO
++        }
++        int size = s.st_size;
++        unsigned char *mmapPtr = mmap(0, size, PROT_READ, MAP_PRIVATE, fd, 0);
+ 
+-        while (queryItem) {
+-            if (queryItem->value != NULL) {
+-                FCGX_FPrintF(request.out, "<br>%s, %s", queryItem->key, queryItem->value);
+-            } else {
+-                FCGX_FPrintF(request.out, "<br>%s, Null", queryItem->key);
+-            }
+-            queryItem = queryItem->next;
++        for (int i = 0; i < size; ++i) {
++            FCGX_FPrintF(request.out, "%c", mmapPtr[i]);
+         }
++        close(fd);
++
++        queryItem = queryList;
+ 
+         FCGX_Finish_r(&request);
+         uriFreeUriMembersA(&uri);
