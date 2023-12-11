@@ -4,6 +4,6 @@ cmake -B build
 
 cmake --build build
 
-**Run applicatio**
+**Run application**
 
 build/AxisDataRetriever <config file>
