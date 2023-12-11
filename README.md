@@ -6,4 +6,4 @@ cmake --build build
 
 **Run application**
 
-build/AxisDataRetriever <config file>
+build/AxisDataRetriever \<config_xml\>
