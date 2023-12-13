@@ -35,7 +35,7 @@ Set `IP address`, `user` and `password` in `config/configs.xml` file.
 
 Run http server
 ```
-python2 http_server/http-server.py 808
+python2 http_server/http-server.py 8080
 ```
 
 ### Build
