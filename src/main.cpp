@@ -15,7 +15,6 @@ int main(int argc, char *argv[])
     }
 
     utils::Configs config;
-//    const char* filename = "/home/marta/dev/cammera_acap/configs.xml";
     const char* filename = argv[1];
     if (!utils::loadConfigs(filename, config))
     {
@@ -23,37 +22,36 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-
-    const std::string ImgFile = "img_frame_y800.bin";
     HttpClient httpClient;
-
     HttpClient::GetRequest getRequest =
     {
-        .url = "http://10.0.9.78/local/fastcgi_example/example.cgi?:/current-img=y800",
-        .fileName = ImgFile,
-        .userName = "root",
-        .password = "pass"
+        .url = config.axisCgiUrl,
+        .fileName = config.outBinFile,
+        .userName = config.userName,
+        .password = config.password
     };
 
+    cout << "Retrieve data from the cammera (GET request): " << endl;
     httpClient.httpGetRequest(getRequest);
 
-    AxisImg img(ImgFile);
-    cout << "Received file " << ImgFile << " (" << img.data().size() << " Bytes)"<< endl;
+    AxisImg img(config.outBinFile);
+    cout << "Received file " << config.outBinFile << " (" << img.data().size() << " Bytes)"<< endl;
 
-    const string xmlFileName = "img_frame_y800.xml";
-    if (img.saveAsXml(xmlFileName) < 0)
+    cout << "Pack image into xml file" << endl;
+    if (img.saveAsXml(config.outXmlFile) < 0)
     {
-        cout << "Failed to save xml file: " << xmlFileName << endl;
+        cout << "Failed to save xml file: " << config.outXmlFile << endl;
     }
     else
     {
-        cout << "Created XML file: " << xmlFileName << endl;
+        cout << "Created XML file: " << config.outXmlFile << endl;
     }
 
+    cout << "Upload xml file to http server (POST request): " << endl;
     const HttpClient::PostRequest postRequest =
     {
-        .url = "http://127.0.0.1:8080",
-        .img = AxisImg(xmlFileName)
+        .url = config.httpServerUrl,
+        .img = AxisImg(config.outXmlFile)
     };
 
     httpClient.httpPostRequest(postRequest);
